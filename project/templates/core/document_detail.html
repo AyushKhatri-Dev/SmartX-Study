@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load markdown_extras %}
+
+{% block title %}{{ document.title }} - SmartX Study{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ document.title }}</h1>
+            <p class="text-gray-600 mt-1">
+                <i class="fas fa-calendar-alt mr-1"></i>
+                Uploaded {{ document.uploaded_at|date:"F d, Y at g:i A" }}
+            </p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'qa_session' document.id %}" class="bg-success text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-300">
+                <i class="fas fa-question-circle mr-1"></i>Q&A
+            </a>
+            <a href="{% url 'generate_test' document.id %}" class="bg-accent text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition duration-300">
+                <i class="fas fa-clipboard-check mr-1"></i>Test
+            </a>
+        </div>
+    </div>
+
+    <!-- Processing Status -->
+    <div class="mb-6">
+        {% if document.is_processed %}
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-500 text-xl mr-3"></i>
+                    <div>
+                        <h3 class="text-green-800 font-semibold">Document Processed Successfully</h3>
+                        <p class="text-green-700 text-sm">Your document has been analyzed and is ready for Q&A and testing.</p>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <i class="fas fa-spinner fa-spin text-yellow-500 text-xl mr-3"></i>
+                    <div>
+                        <h3 class="text-yellow-800 font-semibold">Processing Document</h3>
+                        <p class="text-yellow-700 text-sm">Please wait while we analyze your document. This may take a few moments.</p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Summary Section -->
+    {% if document.summary %}
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <i class="fas fa-brain text-primary mr-3"></i>AI Summary
+            </h2>
+            {% if "Error" in document.summary or "unavailable" in document.summary %}
+                <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg">
+                    <div class="flex items-center mb-3">
+                        <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                        <h3 class="text-red-800 font-semibold">Processing Issue</h3>
+                    </div>
+                    <p class="text-red-700 leading-relaxed">{{ document.summary }}</p>
+                    <div class="mt-4 text-sm text-red-600">
+                        <p><strong>Possible solutions:</strong></p>
+                        <ul class="list-disc list-inside mt-2 space-y-1">
+                            <li>Ensure your Gemini API key is properly configured</li>
+                            <li>Check that the PDF contains readable text (not just images)</li>
+                            <li>Try uploading a different PDF file</li>
+                        </ul>
+                    </div>
+                </div>
+            {% else %}
+                <div class="prose max-w-none">
+                    <div class="bg-blue-50 border-l-4 border-primary p-6 rounded-r-lg">
+                        <div class="text-gray-700 leading-relaxed">{{ document.summary|markdown }}</div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <!-- Action Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Q&A Card -->
+        <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition duration-300">
+            <div class="text-center">
+                <div class="bg-success text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-comments text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Ask Questions</h3>
+                <p class="text-gray-600 mb-4">Get intelligent answers based on your document content</p>
+                <a href="{% url 'qa_session' document.id %}" class="bg-success text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-300">
+                    Start Q&A Session
+                </a>
+            </div>
+        </div>
+
+        <!-- Test Card -->
+        <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition duration-300">
+            <div class="text-center">
+                <div class="bg-accent text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-clipboard-check text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Generate Test</h3>
+                <p class="text-gray-600 mb-4">Create personalized tests to assess your understanding</p>
+                <a href="{% url 'generate_test' document.id %}" class="bg-accent text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition duration-300">
+                    Create Test
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Info -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">
+            <i class="fas fa-info-circle text-primary mr-2"></i>Document Information
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+                <span class="font-semibold text-gray-700">File Name:</span>
+                <span class="text-gray-600">{{ document.file.name }}</span>
+            </div>
+            <div>
+                <span class="font-semibold text-gray-700">Upload Date:</span>
+                <span class="text-gray-600">{{ document.uploaded_at|date:"F d, Y g:i A" }}</span>
+            </div>
+            <div>
+                <span class="font-semibold text-gray-700">Last Updated:</span>
+                <span class="text-gray-600">{{ document.updated_at|date:"F d, Y g:i A" }}</span>
+            </div>
+            <div>
+                <span class="font-semibold text-gray-700">Status:</span>
+                {% if document.is_processed %}
+                    <span class="text-green-600 font-semibold">
+                        <i class="fas fa-check mr-1"></i>Processed
+                    </span>
+                {% else %}
+                    <span class="text-yellow-600 font-semibold">
+                        <i class="fas fa-spinner fa-spin mr-1"></i>Processing
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Dashboard -->
+    <div class="mt-8 text-center">
+        <a href="{% url 'dashboard' %}" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition duration-300">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

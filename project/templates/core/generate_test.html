@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Generate Test - {{ document.title }} - SmartX Study{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Generate Test</h1>
+            <p class="text-gray-600 mt-1">
+                <i class="fas fa-file-pdf mr-1"></i>{{ document.title }}
+            </p>
+        </div>
+        <a href="{% url 'document_detail' document.id %}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-300">
+            <i class="fas fa-arrow-left mr-1"></i>Back to Document
+        </a>
+    </div>
+
+    <!-- Generate New Test -->
+    <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+            <i class="fas fa-plus-circle text-accent mr-3"></i>Create New Test
+        </h2>
+        
+        <div class="bg-orange-50 border border-orange-200 rounded-lg p-6 mb-6">
+            <div class="flex items-start">
+                <i class="fas fa-info-circle text-orange-500 mt-1 mr-3"></i>
+                <div>
+                    <h3 class="text-orange-800 font-semibold mb-2">How Test Generation Works</h3>
+                    <ul class="text-orange-700 text-sm space-y-1">
+                        <li>• AI analyzes your document content to create relevant questions</li>
+                        <li>• Each test contains 5 multiple-choice questions</li>
+                        <li>• Questions focus on key concepts and important details</li>
+                        <li>• Instant feedback and scoring provided</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="text-center">
+                <button type="submit" class="bg-accent text-white px-8 py-3 rounded-lg hover:bg-orange-600 transition duration-300 font-semibold text-lg">
+                    <i class="fas fa-magic mr-2"></i>Generate Test Questions
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Existing Tests -->
+    {% if existing_tests %}
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <i class="fas fa-clipboard-list text-primary mr-3"></i>Previous Tests
+            </h2>
+            
+            <div class="grid grid-cols-1 gap-4">
+                {% for test in existing_tests %}
+                    <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition duration-300">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900 mb-1">{{ test.title }}</h3>
+                                <p class="text-gray-600 text-sm mb-2">
+                                    <i class="fas fa-calendar-alt mr-1"></i>
+                                    Created {{ test.created_at|date:"F d, Y g:i A" }}
+                                </p>
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <i class="fas fa-question-circle mr-1"></i>
+                                    {{ test.questions|length }} questions
+                                </div>
+                            </div>
+                            
+                            <div class="flex space-x-3">
+                                <a href="{% url 'take_test' test.id %}" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+                                    <i class="fas fa-play mr-1"></i>Take Test
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Test Attempts -->
+                        {% if test.attempts.all %}
+                            <div class="mt-4 pt-4 border-t border-gray-100">
+                                <h4 class="font-semibold text-gray-700 mb-2">Recent Attempts:</h4>
+                                <div class="space-y-2">
+                                    {% for attempt in test.attempts.all|slice:":3" %}
+                                        <div class="flex items-center justify-between text-sm">
+                                            <span class="text-gray-600">{{ attempt.completed_at|date:"M d, Y g:i A" }}</span>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-gray-700">{{ attempt.score }}/{{ attempt.total_questions }}</span>
+                                                <span class="bg-{% if attempt.percentage >= 80 %}green{% elif attempt.percentage >= 60 %}yellow{% else %}red{% endif %}-100 text-{% if attempt.percentage >= 80 %}green{% elif attempt.percentage >= 60 %}yellow{% else %}red{% endif %}-800 px-2 py-1 rounded-full text-xs font-semibold">
+                                                    {{ attempt.percentage }}%
+                                                </span>
+                                                <a href="{% url 'test_result' attempt.id %}" class="text-primary hover:text-blue-700">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <div class="text-center py-8">
+                <i class="fas fa-clipboard-list text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">No tests generated yet</h3>
+                <p class="text-gray-600">Generate your first test using the form above!</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

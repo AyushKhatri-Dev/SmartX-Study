@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}Progress Tracking - SmartX Study{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Your Learning Progress</h1>
+        <p class="text-xl text-gray-600">Track your study journey and achievements</p>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center">
+                <div class="bg-primary text-white p-3 rounded-lg">
+                    <i class="fas fa-file-pdf text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 text-sm">Documents</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ total_documents }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center">
+                <div class="bg-success text-white p-3 rounded-lg">
+                    <i class="fas fa-clipboard-check text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 text-sm">Tests Taken</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ total_tests }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center">
+                <div class="bg-accent text-white p-3 rounded-lg">
+                    <i class="fas fa-chart-line text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 text-sm">Average Score</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ avg_score }}%</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center">
+                <div class="bg-purple-600 text-white p-3 rounded-lg">
+                    <i class="fas fa-trophy text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 text-sm">Best Score</p>
+                    <p class="text-3xl font-bold text-gray-900">
+                        {% if test_attempts %}
+                            {% for attempt in test_attempts %}
+                                {% if forloop.first %}{{ attempt.percentage }}%{% endif %}
+                            {% endfor %}
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Documents Overview -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <i class="fas fa-folder-open text-primary mr-3"></i>Your Documents
+            </h2>
+            
+            {% if documents %}
+                <div class="space-y-4">
+                    {% for document in documents %}
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-gray-900">{{ document.title }}</h3>
+                                    <p class="text-gray-600 text-sm">{{ document.uploaded_at|date:"M d, Y" }}</p>
+                                    <div class="flex items-center mt-2 space-x-2">
+                                        {% if document.is_processed %}
+                                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
+                                                <i class="fas fa-check mr-1"></i>Processed
+                                            </span>
+                                        {% endif %}
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                                            {{ document.tests.count }} test(s)
+                                        </span>
+                                        <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">
+                                            {{ document.qa_sessions.count }} Q&A(s)
+                                        </span>
+                                    </div>
+                                </div>
+                                <a href="{% url 'document_detail' document.id %}" class="bg-primary text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition duration-300">
+                                    View
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-file-pdf text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600 mb-4">No documents uploaded yet</p>
+                    <a href="{% url 'upload_document' %}" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+                        Upload Your First Document
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Performance Chart Placeholder -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <i class="fas fa-chart-area text-success mr-3"></i>Performance Trend
+            </h2>
+            
+            {% if recent_scores %}
+                <div class="space-y-4">
+                    <div class="text-center mb-4">
+                        <p class="text-gray-600">Recent test scores show your learning progress</p>
+                    </div>
+                    
+                    <!-- Simple progress visualization -->
+                    <div class="space-y-3">
+                        {% for score in recent_scores %}
+                            <div class="flex items-center">
+                                <span class="text-sm text-gray-600 w-16">Test {{ forloop.counter }}</span>
+                                <div class="flex-1 mx-3">
+                                    <div class="bg-gray-200 rounded-full h-2">
+                                        <div class="bg-{% if score >= 80 %}green{% elif score >= 60 %}yellow{% else %}red{% endif %}-500 h-2 rounded-full" style="width: {{ score }}%"></div>
+                                    </div>
+                                </div>
+                                <span class="text-sm font-semibold text-{% if score >= 80 %}green{% elif score >= 60 %}yellow{% else %}red{% endif %}-600 w-12">{{ score }}%</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-chart-area text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600">Take some tests to see your performance trend</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Test History -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+            <i class="fas fa-history text-accent mr-3"></i>Test History
+        </h2>
+        
+        {% if test_attempts %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-semibold text-gray-900">Test Name</th>
+                            <th class="px-4 py-3 text-left font-semibold text-gray-900">Document</th>
+                            <th class="px-4 py-3 text-left font-semibold text-gray-900">Score</th>
+                            <th class="px-4 py-3 text-left font-semibold text-gray-900">Percentage</th>
+                            <th class="px-4 py-3 text-left font-semibold text-gray-900">Date</th>
+                            <th class="px-4 py-3 text-left font-semibold text-gray-900">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for attempt in test_attempts %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-medium text-gray-900">{{ attempt.test.title }}</td>
+                                <td class="px-4 py-3 text-gray-600">{{ attempt.test.document.title|truncatechars:30 }}</td>
+                                <td class="px-4 py-3 text-gray-900">{{ attempt.score }}/{{ attempt.total_questions }}</td>
+                                <td class="px-4 py-3">
+                                    <span class="bg-{% if attempt.percentage >= 80 %}green{% elif attempt.percentage >= 60 %}yellow{% else %}red{% endif %}-100 text-{% if attempt.percentage >= 80 %}green{% elif attempt.percentage >= 60 %}yellow{% else %}red{% endif %}-800 px-2 py-1 rounded-full text-xs font-semibold">
+                                        {{ attempt.percentage }}%
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-gray-600">{{ attempt.completed_at|date:"M d, Y" }}</td>
+                                <td class="px-4 py-3">
+                                    <a href="{% url 'test_result' attempt.id %}" class="text-primary hover:text-blue-700 font-medium">
+                                        View Details
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <i class="fas fa-clipboard-check text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">No tests taken yet</h3>
+                <p class="text-gray-600 mb-4">Upload a document and generate your first test!</p>
+                <a href="{% url 'dashboard' %}" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+                    Go to Dashboard
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - SmartX Study{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Welcome Header -->
+    <div class="bg-gradient-to-r from-primary to-blue-700 text-white rounded-xl p-8 mb-8">
+        <div class="flex flex-col md:flex-row items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Welcome back, {{ user.get_full_name|default:user.username }}!</h1>
+                <p class="text-blue-100">Ready to continue your learning journey?</p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <a href="{% url 'upload_document' %}" class="bg-white text-primary px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition duration-300">
+                    <i class="fas fa-plus mr-2"></i>Upload Document
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <div class="flex items-center">
+                <div class="bg-primary text-white p-3 rounded-lg">
+                    <i class="fas fa-file-pdf text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 text-sm">Documents</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_documents }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <div class="flex items-center">
+                <div class="bg-success text-white p-3 rounded-lg">
+                    <i class="fas fa-clipboard-check text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 text-sm">Tests Taken</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_tests }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            <div class="flex items-center">
+                <div class="bg-accent text-white p-3 rounded-lg">
+                    <i class="fas fa-chart-line text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 text-sm">Average Score</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ avg_score }}%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Recent Documents -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-900">
+                    <i class="fas fa-file-pdf mr-2 text-primary"></i>Recent Documents
+                </h2>
+                <a href="{% url 'upload_document' %}" class="text-primary hover:text-blue-700 text-sm font-semibold">
+                    View All
+                </a>
+            </div>
+            
+            {% if documents %}
+                <div class="space-y-4">
+                    {% for document in documents %}
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-300">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-gray-900">{{ document.title }}</h3>
+                                    <p class="text-gray-600 text-sm">Uploaded {{ document.uploaded_at|date:"M d, Y" }}</p>
+                                    <div class="flex items-center mt-2">
+                                        {% if document.is_processed %}
+                                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
+                                                <i class="fas fa-check mr-1"></i>Processed
+                                            </span>
+                                        {% else %}
+                                            <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">
+                                                <i class="fas fa-spinner mr-1"></i>Processing
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <a href="{% url 'document_detail' document.id %}" class="bg-primary text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition duration-300">
+                                        View
+                                    </a>
+                                    {% if document.is_processed %}
+                                        <a href="{% url 'qa_session' document.id %}" class="bg-success text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition duration-300">
+                                            Q&A
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-file-pdf text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600 mb-4">No documents uploaded yet</p>
+                    <a href="{% url 'upload_document' %}" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+                        Upload Your First Document
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-6">
+                <i class="fas fa-clock mr-2 text-success"></i>Recent Activity
+            </h2>
+            
+            <div class="space-y-4">
+                <!-- Recent Tests -->
+                {% for test in recent_tests %}
+                    <div class="flex items-center p-3 bg-blue-50 rounded-lg">
+                        <div class="bg-blue-500 text-white p-2 rounded-full">
+                            <i class="fas fa-clipboard-check text-sm"></i>
+                        </div>
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-semibold text-gray-900">Test Completed</p>
+                            <p class="text-xs text-gray-600">{{ test.test.title }} - Score: {{ test.score }}/{{ test.total_questions }}</p>
+                            <p class="text-xs text-gray-500">{{ test.completed_at|date:"M d, Y H:i" }}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold">
+                                {{ test.percentage }}%
+                            </span>
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <!-- Recent Q&A -->
+                {% for qa in recent_qa %}
+                    <div class="flex items-center p-3 bg-green-50 rounded-lg">
+                        <div class="bg-green-500 text-white p-2 rounded-full">
+                            <i class="fas fa-question-circle text-sm"></i>
+                        </div>
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-semibold text-gray-900">Question Asked</p>
+                            <p class="text-xs text-gray-600">{{ qa.question|truncatechars:50 }}</p>
+                            <p class="text-xs text-gray-500">{{ qa.created_at|date:"M d, Y H:i" }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                {% if not recent_tests and not recent_qa %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-clock text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600">No recent activity</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mt-8 bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">
+            <i class="fas fa-bolt mr-2 text-accent"></i>Quick Actions
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <a href="{% url 'upload_document' %}" class="bg-primary text-white p-4 rounded-lg text-center hover:bg-blue-700 transition duration-300">
+                <i class="fas fa-plus text-2xl mb-2"></i>
+                <p class="font-semibold">Upload Document</p>
+            </a>
+            
+            <a href="{% url 'progress_tracking' %}" class="bg-success text-white p-4 rounded-lg text-center hover:bg-green-700 transition duration-300">
+                <i class="fas fa-chart-line text-2xl mb-2"></i>
+                <p class="font-semibold">View Progress</p>
+            </a>
+            
+            <a href="#" class="bg-accent text-white p-4 rounded-lg text-center hover:bg-orange-600 transition duration-300">
+                <i class="fas fa-book text-2xl mb-2"></i>
+                <p class="font-semibold">Study Materials</p>
+            </a>
+            
+            <a href="#" class="bg-purple-600 text-white p-4 rounded-lg text-center hover:bg-purple-700 transition duration-300">
+                <i class="fas fa-cog text-2xl mb-2"></i>
+                <p class="font-semibold">Settings</p>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

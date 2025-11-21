@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Take Test - {{ test.title }} - SmartX Study{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ test.title }}</h1>
+            <p class="text-gray-600">
+                <i class="fas fa-file-pdf mr-1"></i>{{ test.document.title }}
+            </p>
+            <div class="mt-4 flex items-center justify-center space-x-6 text-sm text-gray-500">
+                <div>
+                    <i class="fas fa-question-circle mr-1"></i>
+                    {{ test.questions|length }} questions
+                </div>
+                <div>
+                    <i class="fas fa-clock mr-1"></i>
+                    No time limit
+                </div>
+                <div>
+                    <i class="fas fa-chart-pie mr-1"></i>
+                    Multiple choice
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Instructions -->
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
+        <h2 class="text-lg font-bold text-blue-800 mb-3">
+            <i class="fas fa-info-circle mr-2"></i>Test Instructions
+        </h2>
+        <ul class="text-blue-700 space-y-1">
+            <li>• Read each question carefully before selecting your answer</li>
+            <li>• Each question has only one correct answer</li>
+            <li>• You can change your answers before submitting</li>
+            <li>• Click "Submit Test" when you're ready to see your results</li>
+        </ul>
+    </div>
+
+    <!-- Test Form -->
+    <div class="bg-white rounded-xl shadow-lg p-8">
+        <form id="test-form" method="post" action="{% url 'submit_test' test.id %}">
+            {% csrf_token %}
+            
+            <div class="space-y-8">
+                {% for question in test.questions %}
+                    <div class="question-container border-b border-gray-200 pb-8 last:border-b-0">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-3">
+                                <span class="bg-primary text-white w-8 h-8 rounded-full inline-flex items-center justify-center text-sm mr-3">
+                                    {{ forloop.counter }}
+                                </span>
+                                {{ question.question }}
+                            </h3>
+                        </div>
+                        
+                        <div class="ml-11 space-y-3">
+                            {% for option, text in question.options.items %}
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition duration-200">
+                                    <input type="radio" name="question_{{ forloop.parentloop.counter0 }}" value="{{ option }}" 
+                                           class="mr-3 text-primary focus:ring-primary focus:ring-2">
+                                    <span class="flex-1">
+                                        <span class="font-semibold text-gray-700 mr-2">{{ option }}.</span>
+                                        <span class="text-gray-900">{{ text }}</span>
+                                    </span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="mt-8 text-center">
+                <button type="submit" class="bg-success text-white px-8 py-3 rounded-lg hover:bg-green-700 transition duration-300 font-semibold text-lg">
+                    <i class="fas fa-check-circle mr-2"></i>Submit Test
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Navigation -->
+    <div class="mt-8 text-center">
+        <a href="{% url 'generate_test' test.document.id %}" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition duration-300">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Tests
+        </a>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('test-form');
+    const questions = document.querySelectorAll('.question-container');
+    
+    // Add progress tracking
+    function updateProgress() {
+        const totalQuestions = questions.length;
+        let answeredQuestions = 0;
+        
+        questions.forEach(function(question) {
+            const radios = question.querySelectorAll('input[type="radio"]');
+            const isAnswered = Array.from(radios).some(radio => radio.checked);
+            if (isAnswered) {
+                answeredQuestions++;
+            }
+        });
+        
+        const progress = (answeredQuestions / totalQuestions) * 100;
+        console.log(`Progress: ${answeredQuestions}/${totalQuestions} (${progress.toFixed(1)}%)`);
+    }
+    
+    // Listen for answer changes
+    const radioButtons = document.querySelectorAll('input[type="radio"]');
+    radioButtons.forEach(function(radio) {
+        radio.addEventListener('change', updateProgress);
+    });
+    
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        const totalQuestions = questions.length;
+        let answeredQuestions = 0;
+        
+        questions.forEach(function(question) {
+            const radios = question.querySelectorAll('input[type="radio"]');
+            const isAnswered = Array.from(radios).some(radio => radio.checked);
+            if (isAnswered) {
+                answeredQuestions++;
+            }
+        });
+        
+        if (answeredQuestions < totalQuestions) {
+            e.preventDefault();
+            const unanswered = totalQuestions - answeredQuestions;
+            if (!confirm(`You have ${unanswered} unanswered question(s). Are you sure you want to submit?`)) {
+                return;
+            }
+            // If confirmed, allow submission
+            form.submit();
+        }
+    });
+});
+</script>
+{% endblock %}
